@@ -34,7 +34,6 @@ def extract_bounding_box_points(pcd, bbox_points):
 annotations = load_annotations("Data/test/labels/E_DRG_230829_133_LR_159.json")
 
 
-
 data = []
 for class_name, bbox_points in annotations:
     cropped_pcd = extract_bounding_box_points(pcd, bbox_points)
@@ -74,7 +73,7 @@ class PointCloudDataset(Dataset):
 # 데이터 로드 (전처리된 데이터 리스트 사용)
 
 dataset = PointCloudDataset(data)
-
+# print(dataset[1][0].shape) # 데이터셋 2차원 텐서(튜플)로 바뀜. 첫번째 인덱스는 포인트 클라우드, 두번째 인덱스는 라벨. 점 개수도 1024개로 통일
 
 
 from torch.utils.data import DataLoader
@@ -85,6 +84,74 @@ train_loader = DataLoader(dataset, batch_size=32, shuffle=True) # dataset을 bat
 
 import torch.nn as nn
 import torch.nn.functional as F
+
+## T-net
+
+class TNet(nn.Module):
+    def __init__(self, k=3):
+        super().__init__()
+        self.k = k
+        self.conv1 = nn.Conv1d(k, 64, 1)
+        self.conv2 = nn.Conv1d(64, 128, 1)
+        self.conv3 = nn.Conv1d(128, 1024, 1)
+        self.fc1 = nn.Linear(1024, 512)
+        self.fc2 = nn.Linear(512, 256)
+        self.fc3 = nn.Linear(256, k * k)
+        
+        self.bn1 = nn.BatchNorm1d(64)
+        self.bn2 = nn.BatchNorm1d(128)
+        self.bn3 = nn.BatchNorm1d(1024)
+        self.bn4 = nn.BatchNorm1d(512)
+        self.bn5 = nn.BatchNorm1d(256)
+
+    def forward(self, x):
+        batch_size = x.size(0)
+        x = F.relu(self.bn1(self.conv1(x)))
+        x = F.relu(self.bn2(self.conv2(x)))
+        x = F.relu(self.bn3(self.conv3(x)))
+        pool = nn.MaxPool1d(x.size(-1))(x)
+        flat = nn.Flatten(1)(pool)
+        
+        x = F.relu(self.bn4(self.fc1(flat)))
+        x = F.relu(self.bn5(self.fc2(x)))
+        # x = self.fc3(x)
+        
+        iden = torch.eye(self.k).repeat(batch_size, 1, 1)
+        if x.is_cuda:
+            iden = iden.cuda()
+        matrix = self.fc3(x).view(-1, self.k, self.k) + iden
+        return matrix
+
+class Transform(nn.Module):
+    def __init__(self):
+        super().__init__()
+        self.input_transform = TNet(k=3)
+        self.feature_transform = TNet(k=64)
+        self.conv1 = nn.Conv1d(3,64,1)
+
+        self.conv2 = nn.Conv1d(64,128,1)
+        self.conv3 = nn.Conv1d(128,1024,1)
+
+
+        self.bn1 = nn.BatchNorm1d(64)
+        self.bn2 = nn.BatchNorm1d(128)
+        self.bn3 = nn.BatchNorm1d(1024)
+
+    def forward(self, input):
+        matrix3x3 = self.input_transform(input)
+        # batch matrix multiplication
+        xb = torch.bmm(torch.transpose(input,1,2), matrix3x3).transpose(1,2)
+
+        xb = F.relu(self.bn1(self.conv1(xb)))
+
+        matrix64x64 = self.feature_transform(xb)
+        xb = torch.bmm(torch.transpose(xb,1,2), matrix64x64).transpose(1,2)
+
+        xb = F.relu(self.bn2(self.conv2(xb)))
+        xb = self.bn3(self.conv3(xb))
+        xb = nn.MaxPool1d(xb.size(-1))(xb)
+        output = nn.Flatten(1)(xb)
+        return output, matrix3x3, matrix64x64
 
 class PointNet(nn.Module):
     def __init__(self, k=9):
@@ -141,5 +208,5 @@ def train_model(model, train_loader, num_epochs=20):
     torch.save(model.state_dict(), 'pointnet_model.pth')
     
 
-train_model(pointnet, train_loader)
+# train_model(pointnet, train_loader)
 
