@@ -68,13 +68,13 @@ class PointCloudDataset(Dataset):
             indices = np.random.choice(points.shape[0], self.num_points, replace=True)
         
         sampled_points = points[indices]
-        return torch.tensor(sampled_points, dtype=torch.float32), torch.tensor(label, dtype=torch.long)
+        return {'pointcloud': torch.tensor(sampled_points, dtype=torch.float32),'category': torch.tensor(label, dtype=torch.long)}
 
 # 데이터 로드 (전처리된 데이터 리스트 사용)
 
 dataset = PointCloudDataset(data)
 # print(dataset[1][0].shape) # 데이터셋 2차원 텐서(튜플)로 바뀜. 첫번째 인덱스는 포인트 클라우드, 두번째 인덱스는 라벨. 점 개수도 1024개로 통일
-
+print(dataset[0])
 
 from torch.utils.data import DataLoader
 
@@ -156,51 +156,77 @@ class Transform(nn.Module):
 class PointNet(nn.Module):
     def __init__(self, k=9):
         super(PointNet, self).__init__()
-        self.conv1 = nn.Conv1d(3, 64, 1)
-        self.conv2 = nn.Conv1d(64, 128, 1)
-        self.conv3 = nn.Conv1d(128, 1024, 1)
+        self.transform = Transform()
+        # self.conv1 = nn.Conv1d(3, 64, 1)
+        # self.conv2 = nn.Conv1d(64, 128, 1)
+        # self.conv3 = nn.Conv1d(128, 1024, 1)
+        
         self.fc1 = nn.Linear(1024, 512)
         self.fc2 = nn.Linear(512, 256)
         self.fc3 = nn.Linear(256, k)
+        
+        self.bn1 = nn.BatchNorm1d(512)
+        self.bn2 = nn.BatchNorm1d(256)
         self.dropout = nn.Dropout(p=0.3)
-        self.bn1 = nn.BatchNorm1d(64)
-        self.bn2 = nn.BatchNorm1d(128)
-        self.bn3 = nn.BatchNorm1d(1024)
-        self.bn4 = nn.BatchNorm1d(512)
-        self.bn5 = nn.BatchNorm1d(256)
+        self.logsoftmax = nn.LogSoftmax(dim=1)
+        
+        # self.bn3 = nn.BatchNorm1d(1024)
+        # self.bn4 = nn.BatchNorm1d(512)
+        # self.bn5 = nn.BatchNorm1d(256)
 
-    def forward(self, x):
-        x = F.relu(self.bn1(self.conv1(x)))
-        x = F.relu(self.bn2(self.conv2(x)))
-        x = F.relu(self.bn3(self.conv3(x)))
-        x = torch.max(x, 2)[0]
-        x = F.relu(self.bn4(self.fc1(x)))
-        x = F.relu(self.bn5(self.fc2(x)))
-        x = self.dropout(x)
-        x = self.fc3(x)
-        return x
+    def forward(self, input):
+        xb, m3x3, m64x64 = self.transform(input)
+        xb = F.relu(self.bn1(self.fc1(xb)))
+        xb = F.relu(self.bn2(self.dropout(self.fc2(xb))))
+        output = self.fc3(xb)
+        # x = F.relu(self.bn1(self.conv1(x)))
+        # x = F.relu(self.bn2(self.conv2(x)))
+        # x = torch.max(x, 2)[0]
+        # x = F.relu(self.bn3(self.conv3(x)))
+        # x = F.relu(self.bn4(self.fc1(x)))
+        # x = F.relu(self.bn5(self.fc2(x)))
+        # x = self.dropout(x)
+        # x = self.fc3(x)
+        return self.logsoftmax(output), m3x3, m64x64
 
-pointnet = PointNet(k=9)  # 두 개의 클래스로 분류
+def pointnetloss(outputs, labels, m3x3, m64x64, alpha = 0.0001):
+    criterion = torch.nn.NLLLoss()
+    bs=outputs.size(0)
+    id3x3 = torch.eye(3, requires_grad=True).repeat(bs,1,1)
+    id64x64 = torch.eye(64, requires_grad=True).repeat(bs,1,1)
+    if outputs.is_cuda:
+        id3x3=id3x3.cuda()
+        id64x64=id64x64.cuda()
+    diff3x3 = id3x3-torch.bmm(m3x3,m3x3.transpose(1,2))
+    diff64x64 = id64x64-torch.bmm(m64x64,m64x64.transpose(1,2))
+    return criterion(outputs, labels) + alpha * (torch.norm(diff3x3)+torch.norm(diff64x64)) / float(bs)
+
+device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+print(device)
+pointnet = PointNet() 
+pointnet.to(device)
 
 
 # 모델 학습
 
 import torch.optim as optim
 
-criterion = nn.CrossEntropyLoss()
-optimizer = optim.Adam(pointnet.parameters(), lr=0.001)
+# load if model exists
+# pointnet.load_state_dict(torch.load('pointnet_model.pth'))
+
+# criterion = nn.CrossEntropyLoss()
+optimizer = optim.Adam(pointnet.parameters(), lr=0.00025)
 
 def train_model(model, train_loader, num_epochs=20):
-    device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
-    model.to(device)
     for epoch in range(num_epochs):
-        model.train()
+        pointnet.train()
         running_loss = 0.0
-        for inputs, labels in train_loader:
-            inputs = inputs.permute(0, 2, 1)  # (batch_size, num_points, 3) -> (batch_size, 3, num_points)
+        for i, data in enumerate(train_loader, 0):
+            inputs, labels = data['pointcloud'].to(device).float(), data['category'].to(device)  # (batch_size, num_points, 3) -> (batch_size, 3, num_points)
+            print(inputs.size())
             optimizer.zero_grad()
-            outputs = model(inputs)
-            loss = criterion(outputs, labels)
+            outputs, m3x3, m64x64 = pointnet(inputs.transpose(1, 2))
+            loss = pointnetloss(outputs, labels, m3x3, m64x64)
             loss.backward()
             optimizer.step()
             running_loss += loss.item()
@@ -208,5 +234,5 @@ def train_model(model, train_loader, num_epochs=20):
     torch.save(model.state_dict(), 'pointnet_model.pth')
     
 
-# train_model(pointnet, train_loader)
+train_model(pointnet, train_loader)
 
