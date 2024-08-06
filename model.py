@@ -126,6 +126,7 @@ def train_model(model, train_loader, val_loader, num_epochs=20):
                 correct += (predicted == labels).sum().item()
         val_acc = 100. * correct / total
         print('Valid accuracy: %d %%' % val_acc)
+        print(total, correct)
 
     torch.save(model.state_dict(), 'pointnet_model.pth')
     

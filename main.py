@@ -3,7 +3,7 @@ import torch
 from torch.utils.data import DataLoader
 from data_preprocess import *
 from model import *
-
+from eval_model import *
 # cuda check
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
@@ -28,12 +28,12 @@ test_loader = DataLoader(test_dataset, batch_size=32, shuffle=False)
 pointnet = PointNet()
 pointnet.to(device)
 
+# 모델 로드 
 
-# 모델 학습
-# train_model(pointnet, train_loader, val_loader)
-
-# 저장된 모델 불러오기
 pointnet.load_state_dict(torch.load('pointnet_model.pth'))
+
+#모델 학습 후 저장
+# train_model(pointnet, train_loader, val_loader)
 
 # 테스트 데이터셋으로 평가
 test_model(pointnet, test_loader)
