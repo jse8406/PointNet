@@ -4,6 +4,10 @@ from torch.utils.data import DataLoader
 from data_preprocess import *
 from model import *
 
+# cuda check
+device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+
+
 # 데이터 로드
 base_path = 'Data'
 train_data = load_data_from_directory(base_path, 'training')
@@ -21,7 +25,6 @@ val_loader = DataLoader(val_dataset, batch_size=32, shuffle=False)
 test_loader = DataLoader(test_dataset, batch_size=32, shuffle=False)
 
 #모델 생성
-device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 pointnet = PointNet()
 pointnet.to(device)
 
