@@ -2,7 +2,7 @@ import torch
 import torch.nn as nn
 import torch.nn.functional as F
 import torch.optim as optim
-
+from eval_model import *
 
 # 모델 정의
 
@@ -132,10 +132,12 @@ def train_model(model, train_loader, val_loader, num_epochs=20):
     
     
 # 학습된 모델을 테스트 데이터셋으로 평가하기
-def test_model(model, test_loader):
+def test_model(model, test_loader, num_classes):
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
     model.eval()
     correct = total = 0
+    all_preds = []
+    all_labels = []
     with torch.no_grad():
         for data in test_loader:
             inputs, labels = data['pointcloud'].to(device).float(), data['category'].to(device)
@@ -143,6 +145,19 @@ def test_model(model, test_loader):
             _, predicted = torch.max(outputs.data, 1)
             total += labels.size(0)
             correct += (predicted == labels).sum().item()
+            all_preds.append(predicted)
+            all_labels.append(labels)
+
     test_acc = 100. * correct / total
     print('Test accuracy: %d %%' % test_acc)
-    # print("correct:", correct, "total:", total)
+    
+    # Calculate mIOU and mAP
+    all_preds = torch.cat(all_preds)
+    all_labels = torch.cat(all_labels)
+    
+    mAP = calculate_map(all_preds, all_labels, num_classes)
+    mIOU = calculate_iou(all_preds, all_labels, num_classes)
+    
+    print('Test mAP: %.4f' % mAP)
+    print('Test mIOU: %.4f' % mIOU)
+
