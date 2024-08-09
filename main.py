@@ -9,10 +9,11 @@ from data_augment import *
 if __name__ == "__main__":
     # cuda check
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
-
+    print("here")
+    print(device)
     # 데이터 로드
-    base_path = 'Data'
-    train_data = load_data_from_directory(base_path, 'training')
+    base_path = 'E:\set2'
+    train_data = load_data_from_directory(base_path, 'training') # ('car', PointCloud with 1323 points.)
     val_data = load_data_from_directory(base_path, 'validation')
     test_data = load_data_from_directory(base_path, 'test')
 
@@ -42,7 +43,7 @@ if __name__ == "__main__":
         print(f'No model found at {model_path}, starting from scratch.')
         
     # 학습
-    #train_model(pointnet, train_loader, val_loader)
+    train_model(pointnet, train_loader, val_loader)
     # 테스트 데이터셋으로 평가
     num_classes = 9 # 0~8 0은 배경 클래스라고 가정
     #test_model(pointnet, test_loader, num_classes)

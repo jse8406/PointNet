@@ -55,7 +55,8 @@ def load_data_from_directory(base_path, phase):
 # 데이터셋 정의
 class PointCloudDataset(Dataset):
     def __init__(self, data, num_points=1024):
-        self.data = data
+        self.data = [(class_name, point_cloud) for class_name, point_cloud in data 
+                     if np.asarray(point_cloud.points).shape[0] > 0]
         self.num_points = num_points
         self.label_map = {'car': 1, 'bus': 2, 'truck': 3, 'special vehicle': 4, 'motocycle': 5, 'bicycle': 6, 'personal mobility': 7, 'person': 8}
 
@@ -63,15 +64,18 @@ class PointCloudDataset(Dataset):
         return len(self.data)
 
     def __getitem__(self, idx):
-        class_name, point_cloud = self.data[idx]
+        class_name, point_cloud = self.data[idx] # car == classname, 1323points 
         points = np.asarray(point_cloud.points)
         label = self.label_map[class_name]
         
+        # points.shape = (1024,3), 따라서 points.shape[0]은 점의 개수
         # 포인트 샘플링 (필요한 경우 패딩)
-        if points.shape[0] > self.num_points:
-            indices = np.random.choice(points.shape[0], self.num_points, replace=False)
+        if points.shape[0] > 0:
+            if points.shape[0] > self.num_points:
+                indices = np.random.choice(points.shape[0], self.num_points, replace=False)
+            else:
+                indices = np.random.choice(points.shape[0], self.num_points, replace=True)
+            sampled_points = points[indices]
+            return {'pointcloud': torch.tensor(sampled_points, dtype=torch.float32), 'category': torch.tensor(label, dtype=torch.long)}
         else:
-            indices = np.random.choice(points.shape[0], self.num_points, replace=True)
-        
-        sampled_points = points[indices]
-        return {'pointcloud': torch.tensor(sampled_points, dtype=torch.float32), 'category': torch.tensor(label, dtype=torch.long)}
+            return
