@@ -12,7 +12,7 @@ if __name__ == "__main__":
     print("here")
     print(device)
     # 데이터 로드
-    base_path = 'E:\set2'
+    base_path = 'Data'
     train_data = load_data_from_directory(base_path, 'training') # ('car', PointCloud with 1323 points.)
     val_data = load_data_from_directory(base_path, 'validation')
     test_data = load_data_from_directory(base_path, 'test')
@@ -46,4 +46,4 @@ if __name__ == "__main__":
     train_model(pointnet, train_loader, val_loader)
     # 테스트 데이터셋으로 평가
     num_classes = 9 # 0~8 0은 배경 클래스라고 가정
-    #test_model(pointnet, test_loader, num_classes)
+    test_model(pointnet, test_loader, num_classes)
