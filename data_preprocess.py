@@ -5,10 +5,7 @@ import os
 from torch.utils.data import Dataset
 import torch
 
-
-
 # json 파일에서 annotation 읽기
-
 def load_annotations(json_file):
     with open(json_file, 'r') as f:
         data = json.load(f)
@@ -20,7 +17,6 @@ def load_annotations(json_file):
     return annotations
 
 # pcd 파일에서 json 기준으로 bounding box 추출
-
 def extract_bounding_box_points(pcd, bbox_points):
     min_bound = np.min(bbox_points, axis=0)
     max_bound = np.max(bbox_points, axis=0)
@@ -28,14 +24,14 @@ def extract_bounding_box_points(pcd, bbox_points):
     cropped_pcd = pcd.crop(bbox)
     return cropped_pcd
 
-# 디렉토리 탐색 및 파일 로드
-def load_data_from_directory(base_path, phase):
+# 디렉토리 탐색 및 파일 로드 (1000개씩)
+def load_data_from_directory(base_path, phase, start_idx=0):
     data = []
     pcd_dir = os.path.join(base_path, phase, 'pcd')
     label_dir = os.path.join(base_path, phase, 'labels')
     
-    pcd_files = sorted([f for f in os.listdir(pcd_dir) if f.endswith('.pcd')])
-    label_files = sorted([f for f in os.listdir(label_dir) if f.endswith('.json')])
+    pcd_files = sorted([f for f in os.listdir(pcd_dir) if f.endswith('.pcd')])[start_idx:start_idx+1000]
+    label_files = sorted([f for f in os.listdir(label_dir) if f.endswith('.json')])[start_idx:start_idx+1000]
     
     for pcd_file, label_file in zip(pcd_files, label_files):
         pcd_path = os.path.join(pcd_dir, pcd_file)
@@ -64,12 +60,10 @@ class PointCloudDataset(Dataset):
         return len(self.data)
 
     def __getitem__(self, idx):
-        class_name, point_cloud = self.data[idx] # car == classname, 1323points 
+        class_name, point_cloud = self.data[idx] 
         points = np.asarray(point_cloud.points)
         label = self.label_map[class_name]
         
-        # points.shape = (1024,3), 따라서 points.shape[0]은 점의 개수
-        # 포인트 샘플링 (필요한 경우 패딩)
         if points.shape[0] > 0:
             if points.shape[0] > self.num_points:
                 indices = np.random.choice(points.shape[0], self.num_points, replace=False)
