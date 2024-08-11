@@ -9,13 +9,15 @@ from data_augment import *
 if __name__ == "__main__":
     # cuda check
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
-    print("here")
     print(device)
     # 데이터 로드
-    base_path = 'Data'
-    train_data = load_data_from_directory(base_path, 'training') # ('car', PointCloud with 1323 points.)
-    val_data = load_data_from_directory(base_path, 'validation')
-    test_data = load_data_from_directory(base_path, 'test')
+    start_idx = 1000
+    base_path = 'E:\set2'
+    train_data = load_data_from_directory(base_path, 'training',start_idx) # ('car', PointCloud with 1323 points.)
+    val_data = load_data_from_directory(base_path, 'validation', start_idx)
+    
+    # 컴퓨팅 자원 관계상 idx를 바꿔가며 1000개의 파일씩 학습을 진행
+    test_data = load_data_from_directory(base_path, 'test', start_idx)
 
     print(f'Train data: {len(train_data)}')
     print(count_classes(train_data))

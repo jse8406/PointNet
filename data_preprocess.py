@@ -25,13 +25,13 @@ def extract_bounding_box_points(pcd, bbox_points):
     return cropped_pcd
 
 # 디렉토리 탐색 및 파일 로드 (1000개씩)
-def load_data_from_directory(base_path, phase, start_idx=0):
+def load_data_from_directory(base_path, phase, start_idx):
     data = []
     pcd_dir = os.path.join(base_path, phase, 'pcd')
     label_dir = os.path.join(base_path, phase, 'labels')
     
-    pcd_files = sorted([f for f in os.listdir(pcd_dir) if f.endswith('.pcd')])[start_idx:start_idx+1000]
-    label_files = sorted([f for f in os.listdir(label_dir) if f.endswith('.json')])[start_idx:start_idx+1000]
+    pcd_files = sorted([f for f in os.listdir(pcd_dir) if f.endswith('.pcd')])[start_idx:start_idx+100]
+    label_files = sorted([f for f in os.listdir(label_dir) if f.endswith('.json')])[start_idx:start_idx+100]
     
     for pcd_file, label_file in zip(pcd_files, label_files):
         pcd_path = os.path.join(pcd_dir, pcd_file)
