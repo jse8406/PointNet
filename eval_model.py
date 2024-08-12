@@ -11,7 +11,8 @@ def calculate_iou(pred, target, num_classes):
         intersection = np.logical_and(pred_inds, target_inds).sum()
         union = np.logical_or(pred_inds, target_inds).sum()
         if union == 0:
-            iou_list.append(float('nan'))  # Only count if union is not zero
+            # iou_list.append(float('nan'))  # Only count if union is not zero
+            continue
         else:
             iou_list.append(intersection / union)
     return np.nanmean(iou_list)

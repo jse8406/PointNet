@@ -97,9 +97,13 @@ def pointnetloss(outputs, labels, m3x3, m64x64, alpha=0.0001):
 
 # 모델 학습
 
-def train_model(model, train_loader, val_loader, num_epochs=20):
+def train_model(model, train_loader, val_loader, num_epochs=10):
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
-    optimizer = optim.Adam(model.parameters(), lr=0.00025)
+    # device = torch.device("cpu")
+    print(device)
+    
+    model = model.to(device)
+    optimizer = optim.Adam(model.parameters(), lr=0.0001)
     
     for epoch in range(num_epochs):
         model.train()
@@ -134,6 +138,8 @@ def train_model(model, train_loader, val_loader, num_epochs=20):
 # 학습된 모델을 테스트 데이터셋으로 평가하기
 def test_model(model, test_loader, num_classes):
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+    # device = torch.device("cpu")
+    model = model.to(device)
     model.eval()
     correct = total = 0
     all_preds = []

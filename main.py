@@ -11,7 +11,7 @@ if __name__ == "__main__":
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
     print(device)
     # 데이터 로드
-    start_idx = 1000
+    start_idx = 1400
     base_path = 'E:\set2'
     # 컴퓨팅 자원 관계상 idx를 바꿔가며 1000개의 파일씩 학습을 진행
     
@@ -34,7 +34,7 @@ if __name__ == "__main__":
 
     # 모델 생성
     pointnet = PointNet()
-    pointnet.to(device)
+    # pointnet.to(device)
 
     # 모델 로드
     model_path = 'pointnet_model.pth'
@@ -48,4 +48,4 @@ if __name__ == "__main__":
     train_model(pointnet, train_loader, val_loader)
     # 테스트 데이터셋으로 평가
     num_classes = 9 # 0~8 0은 배경 클래스라고 가정
-    # test_model(pointnet, test_loader, num_classes)
+    test_model(pointnet, test_loader, num_classes)
