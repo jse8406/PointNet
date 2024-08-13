@@ -1,0 +1,35 @@
+Traceback (most recent call last):
+  File "c:\Users\jin\Desktop\vscode\self_drive\PointNet\main.py", line 47, in <module>
+    train_model(pointnet, train_loader, val_loader)
+  File "c:\Users\jin\Desktop\vscode\self_drive\PointNet\model.py", line 114, in train_model
+    outputs, m3x3, m64x64 = model(inputs.transpose(1, 2))
+  File "C:\Users\jin\AppData\Local\Programs\Python\Python310\lib\site-packages\torch\nn\modules\module.py", line 1553, in _wrapped_call_impl
+    return self._call_impl(*args, **kwargs)
+  File "C:\Users\jin\AppData\Local\Programs\Python\Python310\lib\site-packages\torch\nn\modules\module.py", line 1562, in _call_impl
+    return forward_call(*args, **kwargs)
+  File "c:\Users\jin\Desktop\vscode\self_drive\PointNet\model.py", line 80, in forward
+  File "C:\Users\jin\AppData\Local\Programs\Python\Python310\lib\site-packages\torch\nn\modules\module.py", line 1553, in _wrapped_call_impl
+    return self._call_impl(*args, **kwargs)
+  File "C:\Users\jin\AppData\Local\Programs\Python\Python310\lib\site-packages\torch\nn\modules\module.py", line 1562, in _call_impl
+    return forward_call(*args, **kwargs)
+  File "c:\Users\jin\Desktop\vscode\self_drive\PointNet\model.py", line 56, in forward
+    matrix3x3 = self.input_transform(input)
+  File "C:\Users\jin\AppData\Local\Programs\Python\Python310\lib\site-packages\torch\nn\modules\module.py", line 1553, in _wrapped_call_impl
+    return self._call_impl(*args, **kwargs)
+  File "C:\Users\jin\AppData\Local\Programs\Python\Python310\lib\site-packages\torch\nn\modules\module.py", line 1562, in _call_impl
+    return forward_call(*args, **kwargs)
+  File "c:\Users\jin\Desktop\vscode\self_drive\PointNet\model.py", line 34, in forward
+    x = F.relu(self.bn4(self.fc1(flat)))
+  File "C:\Users\jin\AppData\Local\Programs\Python\Python310\lib\site-packages\torch\nn\modules\module.py", line 1553, in _wrapped_call_impl
+    return self._call_impl(*args, **kwargs)
+  File "C:\Users\jin\AppData\Local\Programs\Python\Python310\lib\site-packages\torch\nn\modules\module.py", line 1562, in _call_impl
+    return forward_call(*args, **kwargs)
+  File "C:\Users\jin\AppData\Local\Programs\Python\Python310\lib\site-packages\torch\nn\modules\batchnorm.py", line 176, in forward
+    return F.batch_norm(
+  File "C:\Users\jin\AppData\Local\Programs\Python\Python310\lib\site-packages\torch\nn\functional.py", line 2510, in batch_norm
+    _verify_batch_size(input.size())
+  File "C:\Users\jin\AppData\Local\Programs\Python\Python310\lib\site-packages\torch\nn\functional.py", line 2478, in _verify_batch_size
+    raise ValueError(f"Expected more than 1 value per channel when training, got input size {size}")
+ValueError: Expected more than 1 value per channel when training, got input size torch.Size([1, 512])
+
+왜 5000으로하면 나지??

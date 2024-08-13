@@ -32,7 +32,7 @@ def load_data_from_directory(base_path, phase, start_idx):
     
     pcd_files = sorted([f for f in os.listdir(pcd_dir) if f.endswith('.pcd')])[start_idx:start_idx+500]
     label_files = sorted([f for f in os.listdir(label_dir) if f.endswith('.json')])[start_idx:start_idx+500]
-    
+    print("data in :" , start_idx)
     for pcd_file, label_file in zip(pcd_files, label_files):
         pcd_path = os.path.join(pcd_dir, pcd_file)
         label_path = os.path.join(label_dir, label_file)
@@ -51,8 +51,7 @@ def load_data_from_directory(base_path, phase, start_idx):
 # 데이터셋 정의
 class PointCloudDataset(Dataset):
     def __init__(self, data, num_points=1024):
-        self.data = [(class_name, point_cloud) for class_name, point_cloud in data 
-                     if np.asarray(point_cloud.points).shape[0] > 0]
+        self.data = [(class_name, point_cloud) for class_name, point_cloud in data if class_name != 'car' and np.asarray(point_cloud.points).shape[0] > 0] # car 그만 학습
         self.num_points = num_points
         self.label_map = {'car': 1, 'bus': 2, 'truck': 3, 'special vehicle': 4, 'motocycle': 5, 'bicycle': 6, 'personal mobility': 7, 'person': 8}
 
