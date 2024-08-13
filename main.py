@@ -27,7 +27,7 @@ if __name__ == "__main__":
     test_dataset = PointCloudDataset(test_data)
 
     # DataLoader 생성
-    train_loader = DataLoader(train_dataset, batch_size=32, shuffle=True)
+    train_loader = DataLoader(train_dataset, batch_size=32, shuffle=True, drop_last=True)
     val_loader = DataLoader(val_dataset, batch_size=32, shuffle=False)
     test_loader = DataLoader(test_dataset, batch_size=32, shuffle=False)
 
