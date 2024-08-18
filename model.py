@@ -97,15 +97,16 @@ def pointnetloss(outputs, labels, m3x3, m64x64, alpha=0.0001):
 
 # 모델 학습
 
-def train_model(model, train_loader, val_loader, num_epochs=10):
+def train_model(model, train_loader, val_loader, num_epochs=20):
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
-    device = torch.device("cpu")
+    # device = torch.device("cpu")
     print(device)
     
     model = model.to(device)
     optimizer = optim.Adam(model.parameters(), lr=0.00025)
     
     for epoch in range(num_epochs):
+        print("train start")
         model.train()
         running_loss = 0.0
         for i, data in enumerate(train_loader, 0):
@@ -139,6 +140,7 @@ def train_model(model, train_loader, val_loader, num_epochs=10):
 def test_model(model, test_loader, num_classes):
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
     device = torch.device("cpu")
+    
     model = model.to(device)
     model.eval()
     correct = total = 0

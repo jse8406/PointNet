@@ -30,8 +30,8 @@ def load_data_from_directory(base_path, phase, start_idx):
     pcd_dir = os.path.join(base_path, phase, 'pcd')
     label_dir = os.path.join(base_path, phase, 'labels')
     
-    pcd_files = sorted([f for f in os.listdir(pcd_dir) if f.endswith('.pcd')])[start_idx:start_idx+500]
-    label_files = sorted([f for f in os.listdir(label_dir) if f.endswith('.json')])[start_idx:start_idx+500]
+    pcd_files = sorted([f for f in os.listdir(pcd_dir) if f.endswith('.pcd')])[start_idx:]
+    label_files = sorted([f for f in os.listdir(label_dir) if f.endswith('.json')])[start_idx:]
     print("data in :" , start_idx)
     for pcd_file, label_file in zip(pcd_files, label_files):
         pcd_path = os.path.join(pcd_dir, pcd_file)
